@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>745</width>
+    <height>510</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>CGWORK0528</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>745</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuDrawGraphics">
+    <property name="title">
+     <string>图形绘制</string>
+    </property>
+    <addaction name="actionDrawRect"/>
+    <addaction name="actionDrawCircle"/>
+    <addaction name="actionSetColor"/>
+   </widget>
+   <widget class="QMenu" name="menuFillRegion">
+    <property name="title">
+     <string>区域填充</string>
+    </property>
+    <addaction name="actionDrawPolygon"/>
+    <addaction name="actionSetColor_2"/>
+   </widget>
+   <widget class="QMenu" name="menu3DTransform">
+    <property name="title">
+     <string>三维变换</string>
+    </property>
+    <addaction name="actionDrawCube"/>
+    <addaction name="actionTranslationX"/>
+    <addaction name="actionTranslationY"/>
+    <addaction name="actionTranslationZ"/>
+    <addaction name="actionRotateX"/>
+    <addaction name="actionRotateY"/>
+    <addaction name="actionRotateZ"/>
+    <addaction name="action3DSettings"/>
+   </widget>
+   <widget class="QMenu" name="menuDrawCurve">
+    <property name="title">
+     <string>绘制曲线</string>
+    </property>
+    <addaction name="actionDrawBezier"/>
+   </widget>
+   <addaction name="menuDrawGraphics"/>
+   <addaction name="menuFillRegion"/>
+   <addaction name="menu3DTransform"/>
+   <addaction name="menuDrawCurve"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actiontest3">
+   <property name="text">
+    <string>test3</string>
+   </property>
+  </action>
+  <action name="actionDrawRect">
+   <property name="text">
+    <string>绘制矩形</string>
+   </property>
+  </action>
+  <action name="actionDrawCircle">
+   <property name="text">
+    <string>绘制圆形</string>
+   </property>
+  </action>
+  <action name="actionSetColor">
+   <property name="text">
+    <string>设置颜色</string>
+   </property>
+  </action>
+  <action name="actionDrawPolygon">
+   <property name="text">
+    <string>绘制多边形</string>
+   </property>
+  </action>
+  <action name="actionSetColor_2">
+   <property name="text">
+    <string>设置颜色</string>
+   </property>
+  </action>
+  <action name="actionDrawCube">
+   <property name="text">
+    <string>绘制立方体</string>
+   </property>
+  </action>
+  <action name="actionTranslationX">
+   <property name="text">
+    <string>沿X轴方向平移</string>
+   </property>
+  </action>
+  <action name="actionTranslationY">
+   <property name="text">
+    <string>沿Y轴方向平移</string>
+   </property>
+  </action>
+  <action name="actionTranslationZ">
+   <property name="text">
+    <string>沿Z轴方向平移</string>
+   </property>
+  </action>
+  <action name="actionRotateX">
+   <property name="text">
+    <string>绕X轴旋转</string>
+   </property>
+  </action>
+  <action name="actionRotateY">
+   <property name="text">
+    <string>绕Y轴旋转</string>
+   </property>
+  </action>
+  <action name="actionRotateZ">
+   <property name="text">
+    <string>绕Z轴旋转</string>
+   </property>
+  </action>
+  <action name="action3DSettings">
+   <property name="text">
+    <string>设置数据</string>
+   </property>
+  </action>
+  <action name="actionDrawBezier">
+   <property name="text">
+    <string>绘制Bezier曲线</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
