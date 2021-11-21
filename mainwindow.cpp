@@ -6,13 +6,25 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    //img.load("/Users/lijiabo/Documents/GitHub/CGWORK0528/0528.png");
 
     //connect menu actions
     connect(ui->actionDrawRect,&QAction::triggered,this,[=](){//绘制矩形
         this->state=RECT;
     });
-    connect(ui->actionDrawCircle,&QAction::triggered,this,[=](){
+    connect(ui->actionDrawCircle,&QAction::triggered,this,[=](){//绘制圆形
         this->state=CIRCLE;
+    });
+    connect(ui->actionSetColor,&QAction::triggered,this,[=](){//设置颜色
+        penColor=QColorDialog::getColor(penColor,this,"设置颜色");
+        update(rect());
+    });
+    connect(ui->actionDrawPolygon,&QAction::triggered,this,[=](){//绘制多边形
+        this->state=POLYGON;
+    });
+    connect(ui->actionSetColor_2,&QAction::triggered,this,[=](){//设置颜色
+        penColor=QColorDialog::getColor(penColor,this,"设置颜色");
+        update(rect());
     });
 }
 
@@ -24,15 +36,17 @@ MainWindow::~MainWindow()
 void MainWindow::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
-    painter.setPen(Qt::black);
+    painter.setPen(penColor);
     //DEBUG
     painter.drawText(rect(),QString("Width: "+QString::number(rect().width())+" Height: "+QString::number(rect().height())));//显示画面大小
-    if(ifPaintMouseClickText)
-        painter.drawText(rect(),Qt::AlignCenter,QString("Mouse Pressed!"));
+    //if(ifPaintMouseClickText)
+        //painter.drawText(rect(),Qt::AlignCenter,QString("Mouse Pressed!"));
+    //painter.drawText(rect(),Qt::AlignCenter,QString("x:"+QString::number(mousePos.x())+" y:"+QString::number(mousePos.y())));
     //
     switch(state)
     {
     case RECT:
+    case CIRCLE:
         for(QRect rect:rects)
         {
             DDALine(&painter,rect.topLeft().x(),rect.topLeft().y(),rect.topRight().x(),rect.topRight().y());//top
@@ -40,12 +54,23 @@ void MainWindow::paintEvent(QPaintEvent *)
             DDALine(&painter,rect.topLeft().x(),rect.topLeft().y(),rect.bottomLeft().x(),rect.bottomLeft().y());//left
             DDALine(&painter,rect.topRight().x(),rect.topRight().y(),rect.bottomRight().x(),rect.bottomRight().y());//right
         }
-        break;
-    case CIRCLE:
         for(Circle c:circles)
             BresenhamCircle(&painter,c.x,c.y,(int)c.r);
         break;
     case POLYGON:
+        if(currentPolygon!=nullptr&&movePoint!=nullptr)
+        {
+            curPaintPolygon=*currentPolygon;
+            curPaintPolygon.append(*movePoint);
+            Polygon(&painter,&curPaintPolygon);
+        }
+        if(polygons.size()>0)
+        {
+            for(const QPolygon* polygon:polygons)
+            {
+                Polygon(&painter,polygon);
+            }
+        }
         break;
     case CUBE:
         break;
@@ -72,6 +97,13 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         circles.push_back({circleX1,circleY1,1});//r=0可能会有除0问题
         break;
     case POLYGON:
+        if(currentPolygon==nullptr)
+        {
+            currentPolygon=new QPolygon;
+            currentPolygon->append(QPoint(event->pos().x(),event->pos().y()));
+        }
+        else
+            currentPolygon->append(QPoint(event->pos().x(),event->pos().y()));
         break;
     case CUBE:
         break;
@@ -84,7 +116,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     update(rect());
 }
 
-void MainWindow::mouseReleaseEvent(QMouseEvent *)
+void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     //ifPaintMouseClickText=false;
     switch(state)
@@ -94,6 +126,14 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *)
     case CIRCLE:
         break;
     case POLYGON:
+        if(event->button()==Qt::LeftButton)
+        {
+            if(currentPolygon!=nullptr)
+                polygons.push_back(currentPolygon);//?????????????????????
+            currentPolygon=nullptr;
+            delete movePoint;
+            movePoint=nullptr;
+        }
         break;
     case CUBE:
         break;
@@ -107,6 +147,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *)
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
+    mousePos=event->position();
     switch(state)
     {
     case RECT:
@@ -116,6 +157,10 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
         circles.back().r=sqrt((event->pos().x()-circleX1)*(event->pos().x()-circleX1)+(event->pos().y()-circleY1)*(event->pos().y()-circleY1));
         break;
     case POLYGON:
+        if(movePoint==nullptr)
+            movePoint=new QPoint(event->pos().x(),event->pos().y());
+        else
+            *movePoint=event->pos();
         break;
     case CUBE:
         break;
@@ -215,4 +260,66 @@ void MainWindow::MidpointCircle2(QPainter *painter, double x0, double y0, double
         }
 
     }
+}
+
+void MainWindow::Polygon(QPainter* painter, const QPolygon* cpolygon)//附带填充功能
+{
+    QPolygon* polygon=new QPolygon(*cpolygon);
+    if(polygon==nullptr||polygon->size()<=1)
+    {
+        //qDebug(QString("Polygon() failed because polygon->size()=="+QString::number(polygon->size())).toStdString().c_str());
+        return;
+    }
+    QPoint prevPoint = polygon->front();
+    QPoint startPoint = polygon->front();
+    polygon->erase(polygon->cbegin());
+    for(QPoint point:*polygon)
+    {
+        DDALine(painter,prevPoint.x(),prevPoint.y(),point.x(),point.y());
+        prevPoint=point;
+        polygon->erase(polygon->cbegin());
+    }
+    DDALine(painter,prevPoint.x(),prevPoint.y(),startPoint.x(),startPoint.y());
+    //填充
+    //QImage img("https://oss.ljbmedia.top/uPic/2021/11/18/0528.png");
+    /*
+    int imgWidth=img.width();
+    int imgHeight=img.height();
+    int x1=rect().left();
+    int x2=rect().right();
+    int y1=rect().bottom();
+    int y2=rect().top();
+    bool mask[MAXHEIGHT][MAXWIDTH];
+    for(int y=y1;y<=y2;y++)
+        for(int x=x1;x<=x2;x++)
+            mask[y][x]=false;
+    for(QPolygon::const_iterator it=polygon->cbegin();it!=polygon->cend();it++)
+    {
+        int xs=it->x();
+        int dxs=((it+1)->x()-it->x())/((it+1)->y()/it->y());
+        int dys=abs((it+1)->y()-it->y())/((it+1)->y()-it->y());
+        for(int ys=it->y();ys!=(it+1)->y();ys+=dys)
+        {
+            int Ixs=int(xs+0.5);
+            mask[ys][Ixs]=!mask[ys][Ixs];
+            xs+=dys*dxs;
+        }
+    }
+    QPen initialPen = painter->pen();
+    for(int y=y1;y<=y2;y++)
+    {
+        bool inside=false;
+        for(int x=x1;x<=x2;x++)
+        {
+            if(mask[y][x])
+                inside=!inside;
+            if(inside)
+            {
+                painter->setPen(img.pixel(x%imgWidth,y%imgHeight));
+                painter->drawPoint(x,y);
+            }
+        }
+    }
+    painter->setPen(initialPen);
+    */
 }
