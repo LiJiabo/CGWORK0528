@@ -6,7 +6,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    //img.load("/Users/lijiabo/Documents/GitHub/CGWORK0528/0528.png");
+    if(!(img.load("/Users/lijiabo/Documents/GitHub/CGWORK0528/0528.png")))
+        throw "Image loading failed!";
 
     //connect menu actions
     connect(ui->actionDrawRect,&QAction::triggered,this,[=](){//绘制矩形
@@ -58,15 +59,20 @@ void MainWindow::paintEvent(QPaintEvent *)
             BresenhamCircle(&painter,c.x,c.y,(int)c.r);
         break;
     case POLYGON:
-        if(currentPolygon!=nullptr&&movePoint!=nullptr)
+        if(movePoint!=nullptr)
         {
-            curPaintPolygon=*currentPolygon;
+            //把currentPolygon复制给curPaintPolygon
+            curPaintPolygon.clear();
+            for(QPoint point:currentPolygon)
+            {
+                curPaintPolygon.append(point);
+            }
             curPaintPolygon.append(*movePoint);
-            Polygon(&painter,&curPaintPolygon);
+            Polygon(&painter,curPaintPolygon);
         }
         if(polygons.size()>0)
         {
-            for(const QPolygon* polygon:polygons)
+            for(QPolygon& polygon:polygons)
             {
                 Polygon(&painter,polygon);
             }
@@ -97,13 +103,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         circles.push_back({circleX1,circleY1,1});//r=0可能会有除0问题
         break;
     case POLYGON:
-        if(currentPolygon==nullptr)
-        {
-            currentPolygon=new QPolygon;
-            currentPolygon->append(QPoint(event->pos().x(),event->pos().y()));
-        }
-        else
-            currentPolygon->append(QPoint(event->pos().x(),event->pos().y()));
+        currentPolygon.append(QPoint(event->pos().x(),event->pos().y()));
         break;
     case CUBE:
         break;
@@ -128,10 +128,12 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
     case POLYGON:
         if(event->button()==Qt::LeftButton)
         {
-            if(currentPolygon!=nullptr)
-                polygons.push_back(currentPolygon);//?????????????????????
-            currentPolygon=nullptr;
-            delete movePoint;
+            if(currentPolygon.size()>1)
+                polygons.push_back(currentPolygon);
+            currentPolygon.clear();//是深拷贝还是浅拷贝？？？
+
+            if(movePoint!=nullptr)
+                delete movePoint;
             movePoint=nullptr;
         }
         break;
@@ -262,27 +264,33 @@ void MainWindow::MidpointCircle2(QPainter *painter, double x0, double y0, double
     }
 }
 
-void MainWindow::Polygon(QPainter* painter, const QPolygon* cpolygon)//附带填充功能
+void MainWindow::Polygon(QPainter* painter, QPolygon cpolygon)//附带填充功能
 {
-    QPolygon* polygon=new QPolygon(*cpolygon);
-    if(polygon==nullptr||polygon->size()<=1)
+    if(/*cpolygon==nullptr||*/cpolygon.size()<=1)
     {
-        //qDebug(QString("Polygon() failed because polygon->size()=="+QString::number(polygon->size())).toStdString().c_str());
+        //QString msg("Polygon precheck failed, "+(cpolygon==nullptr?"cpolygon==nullptr":("cpolygon->size()=="+QString::number(cpolygon->size()))));
+        //qDebug(msg.toStdString().c_str());
         return;
     }
-    QPoint prevPoint = polygon->front();
-    QPoint startPoint = polygon->front();
-    polygon->erase(polygon->cbegin());
-    for(QPoint point:*polygon)
+    QPolygon polygon(cpolygon);
+    QPoint prevPoint = polygon.front();
+    QPoint startPoint = polygon.front();
+    polygon.erase(polygon.cbegin());
+    for(QPoint point:polygon)
     {
         DDALine(painter,prevPoint.x(),prevPoint.y(),point.x(),point.y());
         prevPoint=point;
-        polygon->erase(polygon->cbegin());
+        polygon.erase(polygon.cbegin());
     }
     DDALine(painter,prevPoint.x(),prevPoint.y(),startPoint.x(),startPoint.y());
     //填充
     //QImage img("https://oss.ljbmedia.top/uPic/2021/11/18/0528.png");
-    /*
+
+    polygon.clear();
+    for(QPoint point:(cpolygon))
+    {
+        polygon.append(point);
+    }
     int imgWidth=img.width();
     int imgHeight=img.height();
     int x1=rect().left();
@@ -293,7 +301,7 @@ void MainWindow::Polygon(QPainter* painter, const QPolygon* cpolygon)//附带填
     for(int y=y1;y<=y2;y++)
         for(int x=x1;x<=x2;x++)
             mask[y][x]=false;
-    for(QPolygon::const_iterator it=polygon->cbegin();it!=polygon->cend();it++)
+    for(QPolygon::const_iterator it=polygon.cbegin();it!=polygon.cend();it++)
     {
         int xs=it->x();
         int dxs=((it+1)->x()-it->x())/((it+1)->y()/it->y());
@@ -321,5 +329,5 @@ void MainWindow::Polygon(QPainter* painter, const QPolygon* cpolygon)//附带填
         }
     }
     painter->setPen(initialPen);
-    */
+
 }
